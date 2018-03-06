@@ -21,7 +21,7 @@ exec(char *path, char **argv)
   struct proc *curproc = myproc();
   
   //setting counter
- 
+  curproc->pgCounter = PGSIZE;
 
 
   begin_op();
@@ -69,10 +69,10 @@ exec(char *path, char **argv)
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
-  if((sz = allocuvm(pgdir, KERNBASE + 4, KERNBASE + (PGSIZE-4)) == 0)) // change to after heap
+  if((sz = allocuvm(pgdir, KERNBASE + 1, KERNBASE + (PGSIZE-1)) == 0)) // change to after heap
     goto bad;
 //  clearpteu(pgdir, (char*)(sz - (PGSIZE-1))); //still need guard page?
-  sp = KERNBASE + 4;
+  sp = KERNBASE + 1;
 
 
   // Push argument strings, prepare rest of stack in ustack.
@@ -117,5 +117,9 @@ exec(char *path, char **argv)
     iunlockput(ip);
     end_op();
   }
+//  if(d){
+//    freevm(d);
+//    return 0;
+//  }
   return -1;
 }
