@@ -17,11 +17,13 @@
 int
 fetchint(uint addr, int *ip)
 {
-  struct proc *curproc = myproc();
-
-  if(addr >= curproc->sz || addr+4 > curproc->sz || addr == 0)
-    return -1;
+//  struct proc *curproc = myproc();
+cprintf("%d",addr); cprintf(" :fetchint \n");
+  if(addr <= (STACKTOP-PGSIZE) || addr+4 > STACKTOP){
+    cprintf("fetch int error\n");
+    return -1;}
   *ip = *(int*)(addr);
+cprintf("fetchint good\n");
   return 0;
 }
 
@@ -32,16 +34,18 @@ int
 fetchstr(uint addr, char **pp)
 {
   char *s, *ep;
-  struct proc *curproc = myproc();
-
-  if(addr > curproc->sz)
-    return -1;
+//  struct proc *curproc = myproc();
+cprintf("%d",addr); cprintf(":fetchstr \n");
+  if(addr > STACKTOP){ cprintf("fetch str error\n");
+    return -1;}
   *pp = (char*)addr;
-  ep = (char*)curproc->sz;
+  ep = (char*)STACKTOP;
   for(s = *pp; s < ep; s++){
-    if(*s == 0)
-      return s - *pp;
+    if(*s == 0){
+cprintf("fetchstr good\n");
+      return s - *pp;}
   }
+cprintf("fetchstr: end loop, fail\n");
   return -1;
 }
 
@@ -49,6 +53,7 @@ fetchstr(uint addr, char **pp)
 int
 argint(int n, int *ip)
 {
+  cprintf("from argint\n");
   return fetchint((myproc()->tf->esp) + 4 + 4*n, ip);
 }
 
@@ -59,13 +64,15 @@ int
 argptr(int n, char **pp, int size)
 {
   int i;
-  struct proc *curproc = myproc();
+//  struct proc *curproc = myproc();
  
   if(argint(n, &i) < 0)
     return -1;
-  if(size < 0 || (uint)i >= curproc->sz || (uint)i+size > curproc->sz)
-    return -1;
+  if(size > PGSIZE || (uint)i < STACKTOP-PGSIZE || (uint)i+size >= STACKTOP){ cprintf("argprt error\n");
+    return -1;}
   *pp = (char*)i;
+
+cprintf("argptr good\n");
   return 0;
 }
 
@@ -77,8 +84,9 @@ int
 argstr(int n, char **pp)
 {
   int addr;
-  if(argint(n, &addr) < (KERNBSE - 4))
+  if(argint(n, &addr) < 0){ cprintf("%d",addr); cprintf(":fetchstr \n"); cprintf("argstr error\n");
     return -1;
+  }
   return fetchstr(addr, pp);
 }
 

@@ -21,7 +21,7 @@ exec(char *path, char **argv)
   struct proc *curproc = myproc();
   
   //setting counter
- 
+  curproc->stack_size = PGSIZE; 
 
 
   begin_op();
@@ -69,10 +69,10 @@ exec(char *path, char **argv)
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
-  if((sz = allocuvm(pgdir, KERNBASE + 4, KERNBASE + (PGSIZE-4)) == 0)) // change to after heap
+  if( (allocuvm(pgdir, STACKTOP, STACKTOP-(PGSIZE*2))) == 0)
     goto bad;
-//  clearpteu(pgdir, (char*)(sz - (PGSIZE-1))); //still need guard page?
-  sp = KERNBASE + 4;
+  clearpteu(pgdir, (char*)(STACKTOP-(PGSIZE*2))); //clear pte of first page to create buffer
+  sp = STACKTOP;
 
 
   // Push argument strings, prepare rest of stack in ustack.
@@ -103,7 +103,7 @@ exec(char *path, char **argv)
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
-  curproc->sz = sz;
+  curproc->sz = STACKTOP-PGSIZE;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   switchuvm(curproc);
